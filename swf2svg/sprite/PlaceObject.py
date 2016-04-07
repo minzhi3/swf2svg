@@ -1,9 +1,7 @@
 import struct
 import xml.etree.ElementTree as ET
-
-from CXForm import CXFormWithAlpha
-from MatrixRecord import MatrixRecord
-from TagData import TagData
+import swf2svg.basic_data_type as basic_type
+from swf2svg.TagData import TagData
 
 
 class PlaceObject2(TagData):
@@ -36,10 +34,10 @@ class PlaceObject2(TagData):
             self.character_id = struct.unpack_from("H", self.content, point)[0]
             point += 2
         if self.flag_matrix:
-            self.matrix = MatrixRecord(self.content[point:])
+            self.matrix = basic_type.read_matrix(self.content[point:])
             point += self.matrix.size
         if self.flag_color_transform:
-            self.color_transform = CXFormWithAlpha(self.content[point:])
+            self.color_transform = basic_type.read_cx_form_with_alpha(self.content[point:])
             self.color_transform.read_data()
             point += self.color_transform.size
         if self.flag_ratio:
@@ -71,4 +69,3 @@ class PlaceObject2(TagData):
         if self.flag_color_transform:
             ret += '\n\t\tCXForm:{0}'.format(self.color_transform)
         return ret
-

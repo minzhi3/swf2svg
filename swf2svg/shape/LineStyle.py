@@ -1,5 +1,5 @@
 import struct
-from RGBColorRecord import RGBColorRecord
+import swf2svg.basic_data_type as basic_type
 
 
 class LineStyleArray:
@@ -51,7 +51,7 @@ class LineStyle:
         self.width = struct.unpack_from('H', self.content, point)[0]
         point += 2
         if self.shape_generation <= 2:
-            self.color = RGBColorRecord(*(struct.unpack_from('BBB', self.content, point)))
+            self.color = basic_type.read_color(*(struct.unpack_from('BBB', self.content, point)), alpha=None)
             point += 3
         return point
 

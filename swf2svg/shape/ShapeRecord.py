@@ -1,12 +1,10 @@
 import struct
-
-from BitReader import BitReader
-from FillStyle import FillStyleArray
-from LineStyle import LineStyleArray
+import swf2svg.shape
+import swf2svg.bit_reader.BitReader as BitReader
 
 
 class StyleChangeRecord:
-    def __init__(self, content, shape_generation, bit_reader: BitReader, end_flag, fill_bits, line_bits):
+    def __init__(self, content, shape_generation, bit_reader: BitReader.BitReader, end_flag, fill_bits, line_bits):
         self.content = content
         self.shape_generation = shape_generation
         self.bit_reader = bit_reader
@@ -26,8 +24,8 @@ class StyleChangeRecord:
         self.fill_style0 = None
         self.fill_style1 = None
         self.line_style = None
-        self.fill_styles = FillStyleArray
-        self.line_styles = LineStyleArray
+        self.fill_styles = None
+        self.line_styles = None
         self.size = self.read_data()
 
     def read_data(self):
@@ -46,9 +44,9 @@ class StyleChangeRecord:
 
         point = 0
         if self.state_new_styles:
-            self.fill_styles = FillStyleArray(buffer, self.shape_generation)
+            self.fill_styles = swf2svg.shape.read_fill_style_array(buffer, self.shape_generation)
             point += self.fill_styles.size
-            self.line_styles = LineStyleArray(buffer[point:], self.shape_generation)
+            self.line_styles = swf2svg.shape.read_line_style_array(buffer[point:], self.shape_generation)
             point += self.line_styles.size
             num_bits = struct.unpack_from("B", buffer[point:], point)[0]
             point += 1

@@ -1,8 +1,8 @@
 import struct
-from BitReader import MemoryBuffer
-from ShapeWithStyle import ShapeWithStyle
-from TagData import TagData
-from util import read_rect
+import swf2svg.basic_data_type as basic_type
+import swf2svg.bit_reader as bit_reader
+from swf2svg.TagData import TagData
+from swf2svg.shape.ShapeWithStyle import ShapeWithStyle
 
 
 class DefineShape(TagData):
@@ -15,9 +15,9 @@ class DefineShape(TagData):
         self.tag_id = 2
 
     def _read_head(self):
-        memory_buffer = MemoryBuffer(self.content, 2)
-        self.shape_rect = read_rect(memory_buffer)
-        return memory_buffer.offset
+        reader = bit_reader.memory_reader(self.content, 2)
+        self.shape_rect = basic_type.read_rect(reader)
+        return reader.offset
 
     def read_data(self):
         point = self._read_head()

@@ -1,8 +1,6 @@
 import struct
-import xml.etree.ElementTree as ET
-from PlaceObject import PlaceObject2
-from TagData import TagData, ShowFrame
-from util import tag_name
+import swf2svg.sprite.PlaceObject as PlaceObject
+from swf2svg.TagData import TagData, ShowFrame
 
 
 class DefineSprite(TagData):
@@ -28,9 +26,9 @@ class DefineSprite(TagData):
 
             sub_content = self.content[point:point + length]
             if tag in [9, 69, 77]:
-                print(tag_name.get(tag))
+                print(swf2svg.tag_name.get(tag))
             elif tag == 26:
-                place_object2 = PlaceObject2(sub_content)
+                place_object2 = PlaceObject.PlaceObject2(sub_content)
                 self.control_tags.append(place_object2)
             elif tag == 1:
                 self.control_tags.append(ShowFrame())
@@ -45,7 +43,7 @@ class DefineSprite(TagData):
         use_nodes = list()
         for data in self.control_tags:
             if data.tag_id == 26:
-                place_object = data  # type: PlaceObject2
+                place_object = data  # type: PlaceObject.PlaceObject2
                 use_node = place_object.to_xml
                 if use_node is not None:
                     use_nodes.append(use_node)

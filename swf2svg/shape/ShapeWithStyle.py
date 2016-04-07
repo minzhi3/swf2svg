@@ -1,27 +1,24 @@
 import struct
 import xml.etree.ElementTree as ET
-from BitReader import BitReader, MemoryBuffer
-from FillStyle import FillStyleArray, FillStyle
-from LineStyle import LineStyleArray, LineStyle
-from ShapeRecord import StyleChangeRecord, CurvedEdgeRecord, StraightEdgeRecord, EndRecord
+import swf2svg.shape as shape
+import swf2svg.bit_reader
+import swf2svg.shape.ShapeRecord as ShapeRecord
+import swf2svg.shape.FillStyle as Fill
+import swf2svg.shape.LineStyle as Line
 
 
 class ShapeWithStyle:
     def __init__(self, content, shape_generation):
         self.content = content
         self.shape_generation = shape_generation
-        self.fill_styles = FillStyleArray
-        self.line_styles = LineStyleArray
         self.shape_records = []
         self.num_fill_bits = 0
         self.num_line_bits = 0
-        self.size = self.read_data()
 
-    def read_data(self):
         point = 0
-        self.fill_styles = FillStyleArray(self.content[point:], self.shape_generation)
+        self.fill_styles = shape.read_fill_style_array(self.content[point:], self.shape_generation)
         point += self.fill_styles.size
-        self.line_styles = LineStyleArray(self.content[point:], self.shape_generation)
+        self.line_styles = shape.read_line_style_array(self.content[point:], self.shape_generation)
         point += self.line_styles.size
 
         num_bits = struct.unpack_from('B', self.content, point)[0]
@@ -29,28 +26,29 @@ class ShapeWithStyle:
         self.num_line_bits = num_bits & 0xF
         point += 1
 
-        bit_reader = BitReader(MemoryBuffer(self.content, point))
+        reader = swf2svg.bit_reader.memory_reader(self.content, point)
         while True:
-            type_flag = bit_reader.read(1)
+            type_flag = reader.read(1)
             if type_flag == 0:
-                end_flag = bit_reader.read(5)
+                end_flag = reader.read(5)
                 if end_flag == 0:
-                    self.shape_records.append(EndRecord())
+                    self.shape_records.append(ShapeRecord.EndRecord())
                     break
                 else:
-                    shape_record = StyleChangeRecord(self.content[point:], self.shape_generation, bit_reader, end_flag,
-                                                     self.num_fill_bits, self.num_line_bits)
+                    shape_record = ShapeRecord.StyleChangeRecord(self.content[point:], self.shape_generation, reader,
+                                                                 end_flag,
+                                                                 self.num_fill_bits, self.num_line_bits)
             else:
-                straight = bit_reader.read(1)
+                straight = reader.read(1)
                 if straight == 1:
-                    shape_record = StraightEdgeRecord(bit_reader)
+                    shape_record = ShapeRecord.StraightEdgeRecord(reader)
                 else:
-                    shape_record = CurvedEdgeRecord(bit_reader)
+                    shape_record = ShapeRecord.CurvedEdgeRecord(reader)
             self.shape_records.append(shape_record)
             point += shape_record.size
 
-        point = bit_reader.offset
-        return point
+        point = reader.offset
+        self.size = point
 
     def to_xml(self, twink):
         path_nodes = list()
@@ -81,31 +79,33 @@ class ShapeWithStyle:
 
 
 class PathXml:
-    def __init__(self, fill_styles: FillStyleArray, line_styles: LineStyleArray, twink: int):
+    def __init__(self, fill_styles: Fill.FillStyleArray, line_styles: Line.LineStyleArray, twink: int):
         self.path_data = ''
         self.twink = twink
         self.fill_array = fill_styles
         self.line_array = line_styles
-        self.fill0 = None  # type: FillStyle
-        self.fill1 = None  # type: FillStyle
-        self.line = None  # type: LineStyle
+        self.fill0 = None  # type: Fill.FillStyle
+        self.fill1 = None  # type: Fill.FillStyle
+        self.line = None  # type: Line.LineStyle
 
-    def add_straight(self, record: StraightEdgeRecord):
+    def add_straight(self, record: ShapeRecord.StraightEdgeRecord):
         if record.general_line_flag == 1:
-            self.path_data += 'l {0} {1}'.format(record.delta_x/self.twink, record.delta_y/self.twink)
+            self.path_data += 'l {0} {1}'.format(record.delta_x / self.twink, record.delta_y / self.twink)
         else:
             if record.vert_line_flag == 0:
-                self.path_data += 'h {0}'.format(record.delta_x/self.twink)
+                self.path_data += 'h {0}'.format(record.delta_x / self.twink)
             else:
-                self.path_data += 'v {0}'.format(record.delta_y/self.twink)
+                self.path_data += 'v {0}'.format(record.delta_y / self.twink)
 
-    def add_curve(self, record: CurvedEdgeRecord):
-        self.path_data += 'q {0} {1} {2} {3}'.format(record.control_delta_x/self.twink, record.control_delta_y/self.twink,
-                                                     record.anchor_delta_x/self.twink, record.anchor_delta_y/self.twink)
+    def add_curve(self, record: ShapeRecord.CurvedEdgeRecord):
+        self.path_data += 'q {0} {1} {2} {3}'.format(record.control_delta_x / self.twink,
+                                                     record.control_delta_y / self.twink,
+                                                     record.anchor_delta_x / self.twink,
+                                                     record.anchor_delta_y / self.twink)
 
-    def style_change(self, record: StyleChangeRecord):
+    def style_change(self, record: ShapeRecord.StyleChangeRecord):
         if record.state_move_to:
-            self.path_data += 'M {0} {1}'.format(record.move_delta_x/self.twink, record.move_delta_y/self.twink)
+            self.path_data += 'M {0} {1}'.format(record.move_delta_x / self.twink, record.move_delta_y / self.twink)
         if record.state_fill_style0 and record.fill_style0 > 0:
             self.fill0 = self.fill_array.data[record.fill_style0 - 1]
         else:

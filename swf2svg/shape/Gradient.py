@@ -1,6 +1,5 @@
 import struct
-
-from RGBColorRecord import RGBColorRecord, RGBAColorRecord
+import swf2svg.basic_data_type as basic_type
 
 
 class Gradient:
@@ -34,9 +33,9 @@ class GradRecord:
         self.content = content
         self.ratio = struct.unpack_from('B', content)
         if shape_generation <= 2:
-            self.color = RGBColorRecord(*(struct.unpack_from('BBB', self.content, 1)))
+            self.color = basic_type.read_color(*(struct.unpack_from('BBB', self.content, 1)), alpha=None)
         elif shape_generation == 3:
-            self.color = RGBAColorRecord(*(struct.unpack_from('BBB', self.content, 1)))
+            self.color = basic_type.read_color(*(struct.unpack_from('BBB', self.content, 1)))
 
     @property
     def size(self):

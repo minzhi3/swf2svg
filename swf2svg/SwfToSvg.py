@@ -1,13 +1,13 @@
 import sys
 import struct
 import xml.etree.ElementTree as ET
-from BitReader import FileBuffer
-from DefineShape import DefineShape, DefineShape2, DefineShape3
-from DefineSprite import DefineSprite
-from PlaceObject import PlaceObject2
-from ShapeWithStyle import ShapeWithStyle
-from TagData import TagData
-from util import read_rect, tag_name
+import swf2svg.basic_data_type as basic_type
+import swf2svg.bit_reader as bit_reader
+from swf2svg.shape.DefineShape import DefineShape, DefineShape2, DefineShape3
+from swf2svg.sprite.DefineSprite import DefineSprite
+from swf2svg.sprite.PlaceObject import PlaceObject2
+
+from swf2svg.util import tag_name
 
 
 class SwfToSvg:
@@ -22,18 +22,18 @@ class SwfToSvg:
         self.characters = dict()
         self.place_objects = list()
 
-    def read_head(self):
+    def _read_head(self):
         head_str = self.file.read(3)
         if head_str != b'FWS':
             raise Exception("head string")
         self.version = struct.unpack('B', self.file.read(1))[0]
         self.size = struct.unpack('I', self.file.read(4))[0]
-        file_buffer = FileBuffer(self.file)
-        self.display_rect = read_rect(file_buffer)
+        reader = bit_reader.file_reader(self.file)
+        self.display_rect = basic_type.read_rect(reader)
         self.frame_rate = struct.unpack('H', self.file.read(2))[0] / 256
         self.frame_count = struct.unpack('H', self.file.read(2))[0]
 
-    def read_tag(self):
+    def _read_tag(self):
         tag_byte = struct.unpack('H', self.file.read(2))[0]
         tag = tag_byte >> 6
         length = tag_byte & 63
@@ -76,14 +76,14 @@ class SwfToSvg:
         print("frame_count", self.frame_count)
         print("frame_rate", self.frame_rate)
 
-    def is_end(self):
+    def _is_end(self):
         current = self.file.tell()
         if current >= self.size:
             return True
         else:
             return False
 
-    def to_xml(self):
+    def _to_xml(self):
 
         root_attr = {'xmlns': 'http://www.w3.org/2000/svg',
                      'version': '1.1',
@@ -114,19 +114,27 @@ class SwfToSvg:
                 svg_root.append(use_xml_node)
         return svg_root
 
+    def to_svg(self):
+        self._read_head()
+        while not self._is_end():
+            self._read_tag()
+        return self._to_xml()
+
+
+def to_svg(swf_file):
+    file = open(swf_file, "rb")
+    swf = SwfToSvg(file)
+    svg_xml = swf.to_svg()
+    return svg_xml
+
 
 def main():
     if len(sys.argv) != 3:
         print("Usage: python swf2svg.py <input file> <output file>")
         exit(2)
     input_file = sys.argv[1]
-    file = open(input_file, "rb")
     output_file = sys.argv[2]
-    swf = SwfToSvg(file)
-    swf.read_head()
-    while not swf.is_end():
-        swf.read_tag()
-    svg_xml = swf.to_xml()
+    svg_xml = to_svg(input_file)
     ET.ElementTree(svg_xml).write(output_file, encoding="UTF-8", xml_declaration=False, method="xml")
 
 
