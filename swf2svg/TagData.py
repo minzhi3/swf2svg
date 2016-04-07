@@ -10,3 +10,6 @@ class ShowFrame(TagData):
     def __init__(self):
         super().__init__(b'')
         self.tag_id = 1
+
+    def __str__(self):
+        return "Show Frame"

@@ -90,8 +90,7 @@ class SwfToSvg:
                      'xmlns:xlink': 'http://www.w3.org/1999/xlink',
                      'preserveAspectRatio': "none",
                      'x': "0px",
-                     'y': "0px",
-                     'viewBox': '-50,-100,100,100'
+                     'y': "0px"
                      }
         svg_root = ET.Element('svg', root_attr)
         svg_node_defs = ET.Element('defs')
@@ -102,14 +101,14 @@ class SwfToSvg:
                 for shape_xml in shape_xml_nodes:
                     svg_node_symbol.append(shape_xml)
             elif data.tag_id == 39:  # DefineSprite <defs> <use>
-                sprite_xml_nodes = data.to_xml
+                sprite_xml_nodes = data.to_xml(self.twink)
                 for sprite_xml in sprite_xml_nodes:
                     svg_node_symbol.append(sprite_xml)
             svg_node_defs.append(svg_node_symbol)
 
         svg_root.append(svg_node_defs)
         for place_object in self.place_objects:
-            use_xml_node = place_object.to_xml
+            use_xml_node = place_object.to_xml(self.twink)
             if use_xml_node is not None:
                 svg_root.append(use_xml_node)
         return svg_root

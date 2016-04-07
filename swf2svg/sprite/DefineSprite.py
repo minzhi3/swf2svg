@@ -38,13 +38,12 @@ class DefineSprite(TagData):
                 raise Exception('unknown tag {0}'.format(tag))
             point += length
 
-    @property
-    def to_xml(self):
+    def to_xml(self, twink):
         use_nodes = list()
         for data in self.control_tags:
             if data.tag_id == 26:
                 place_object = data  # type: PlaceObject.PlaceObject2
-                use_node = place_object.to_xml
+                use_node = place_object.to_xml(twink)
                 if use_node is not None:
                     use_nodes.append(use_node)
         return use_nodes
