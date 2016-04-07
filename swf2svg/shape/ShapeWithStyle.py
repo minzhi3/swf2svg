@@ -100,8 +100,8 @@ class PathXml:
     def add_curve(self, record: ShapeRecord.CurvedEdgeRecord):
         self.path_data += 'q {0} {1} {2} {3}'.format(record.control_delta_x / self.twink,
                                                      record.control_delta_y / self.twink,
-                                                     record.anchor_delta_x / self.twink,
-                                                     record.anchor_delta_y / self.twink)
+                                                     (record.anchor_delta_x + record.control_delta_x) / self.twink,
+                                                     (record.anchor_delta_y + record.control_delta_y) / self.twink)
 
     def style_change(self, record: ShapeRecord.StyleChangeRecord):
         if record.state_move_to:
