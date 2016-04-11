@@ -35,9 +35,11 @@ class ShapeWithStyle:
                     self.shape_records.append(ShapeRecord.EndRecord())
                     break
                 else:
-                    shape_record = ShapeRecord.StyleChangeRecord(self.content[point:], self.shape_generation, reader,
+                    shape_record = ShapeRecord.StyleChangeRecord(self.content, self.shape_generation, reader,
                                                                  end_flag,
                                                                  self.num_fill_bits, self.num_line_bits)
+                    if shape_record.new_style_size > 0:
+                        reader.skip_bytes(shape_record.new_style_size)
             else:
                 straight = reader.read(1)
                 if straight == 1:

@@ -1,20 +1,49 @@
-class MemoryBuffer:
-    def __init__(self, buffer, offset):
+class Buffer:
+    def __init__(self):
+        self.buffer = None
+        self.file = None
+        self._offset = None
+
+    def skip_bytes(self, size):
+        raise NotImplementedError
+
+    def next_byte(self):
+        raise NotImplementedError
+
+    def offset(self):
+        raise NotImplementedError
+
+
+class MemoryBuffer(Buffer):
+    def __init__(self, buffer, _offset):
+        super().__init__()
         self.buffer = buffer
-        self.offset = offset
+        self._offset = _offset
+
+    def skip_bytes(self, size):
+        self.buffer = self.buffer[(self._offset+size):]
+        self._offset = 0
 
     def next_byte(self):
         if self.offset < len(self.buffer):
             ret = self.buffer[self.offset]
-            self.offset += 1
+            self._offset += 1
         else:
             ret = None
         return ret
 
+    @property
+    def offset(self):
+        return self._offset
 
-class FileBuffer:
+
+class FileBuffer(Buffer):
     def __init__(self, file):
+        super().__init__()
         self.file = file
+
+    def skip_bytes(self, size):
+        raise Exception('cannot move file point')
 
     def next_byte(self):
         ret = self.file.read(1)
@@ -29,7 +58,7 @@ class FileBuffer:
 
 
 class BitReader:
-    def __init__(self, source):
+    def __init__(self, source: Buffer):
         self.source = source
         self.pool = 0
         self.pool_length = 0
@@ -56,6 +85,11 @@ class BitReader:
         if ret > (1 << (count - 1)):
             ret -= (1 << count)
         return ret
+
+    def skip_bytes(self, size):
+        self.source.skip_bytes(size)
+        self.pool = 0
+        self.pool_length = 0
 
     @property
     def offset(self):

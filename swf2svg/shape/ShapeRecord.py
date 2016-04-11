@@ -26,7 +26,7 @@ class StyleChangeRecord:
         self.line_style = None
         self.fill_styles = None
         self.line_styles = None
-        self.size = self.read_data()
+        self.size, self.new_style_size = self.read_data()
 
     def read_data(self):
         if self.state_move_to:
@@ -48,12 +48,12 @@ class StyleChangeRecord:
             point += self.fill_styles.size
             self.line_styles = swf2svg.shape.read_line_style_array(buffer[point:], self.shape_generation)
             point += self.line_styles.size
-            num_bits = struct.unpack_from("B", buffer[point:], point)[0]
+            num_bits = struct.unpack_from("B", buffer, point)[0]
             point += 1
             self.fill_bits = num_bits >> 4
             self.line_bits = num_bits & 0xF
 
-        return self.bit_reader.offset + point
+        return self.bit_reader.offset + point, point
 
     def __str__(self):
         ret = 'StyleChangeRecord size:{0}'.format(self.size, self.move_delta_x, self.move_delta_y)
