@@ -65,7 +65,7 @@ class PlaceObject2(TagData):
             return None
 
     def __str__(self):
-        ret = 'PlaceObject2 size:{0}, name:{1}, character:{2}'.format(self.size, self.name, self.character_id)
+        ret = 'PlaceObject2 size:{0}, name:{1}, character:{2}, depth:{3}'.format(self.size, self.name, self.character_id, self.depth)
         if self.flag_matrix:
             ret += '\n\t\tmatrix:{0}'.format(self.matrix)
         if self.flag_color_transform:

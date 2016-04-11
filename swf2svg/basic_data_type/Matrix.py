@@ -42,4 +42,6 @@ class MatrixRecord:
         ret = 'Trans({0},{1})'.format(self.translate_x, self.translate_y)
         if self.has_scale:
             ret += ', Scale({0:.2f},{1:.2f})'.format(self.scale_x, self.scale_y)
+        if self.has_rotate:
+            ret += ', Rotate({0:.2f},{1:.2f})'.format(self.rotate_skew0, self.rotate_skew1)
         return ret
