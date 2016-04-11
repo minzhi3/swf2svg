@@ -23,6 +23,7 @@ class DefineSprite(TagData):
             length = tag_byte & 63
             if length == 63:
                 length = struct.unpack_from('I', self.content, point)[0]
+                point += 4
 
             sub_content = self.content[point:point + length]
             if tag in [9, 69, 77]:
