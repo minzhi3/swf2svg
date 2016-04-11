@@ -35,7 +35,7 @@ class DefineSprite(TagData):
             elif tag == 0:
                 break
             else:
-                raise Exception('unknown tag {0}'.format(tag))
+                raise Exception('unknown tag {0:02X}'.format(tag))
             point += length
 
     def to_xml(self, twink):

@@ -3,6 +3,7 @@ class RGBColorRecord:
         self.red = red
         self.green = green
         self.blue = blue
+        self.alpha = None
 
     @property
     def size(self):

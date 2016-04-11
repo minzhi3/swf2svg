@@ -53,22 +53,31 @@ class ShapeWithStyle:
         self.size = point
 
     def to_xml(self, twink):
+        more_path = False
+        style_only = True
         path_nodes = list()
         path_xml = PathXml(self.fill_styles, self.line_styles, twink)
         for record in self.shape_records:
             if record.type_flag == 1:
+                style_only = False
                 if record.straight_flag == 1:
                     path_xml.add_straight(record)
                 else:
                     path_xml.add_curve(record)
             else:
                 if record.end == 0:
-                    if not path_xml.is_empty:
+                    if record.state_fill_style1 == 0 and record.state_fill_style0 == 0:
+                        more_path = True
+                        path_xml.path_data += 'Z'
+                    else:
+                        more_path = False
+                    if not (style_only or more_path):
                         path_nodes.append(path_xml.to_xml_node)
-                    path_xml.reset_path()
+                        path_xml.reset_path()
+                        style_only = True
                     path_xml.style_change(record)
 
-        if not path_xml.is_empty:
+        if not style_only:
             path_nodes.append(path_xml.to_xml_node)
         return path_nodes
 
@@ -110,15 +119,15 @@ class PathXml:
             self.path_data += 'M {0} {1}'.format(record.move_delta_x / self.twink, record.move_delta_y / self.twink)
         if record.state_fill_style0 and record.fill_style0 > 0:
             self.fill0 = self.fill_array.data[record.fill_style0 - 1]
-        else:
+        elif record.state_fill_style0:
             self.fill0 = None
         if record.state_fill_style1 and record.fill_style1 > 0:
             self.fill1 = self.fill_array.data[record.fill_style1 - 1]
-        else:
+        elif record.state_fill_style1:
             self.fill1 = None
         if record.state_line_style and record.fill_style1 > 0:
             self.line = self.line_array.data[record.line_style - 1]
-        else:
+        elif record.state_line_style:
             self.line = None
         if record.state_new_styles == 1:
             self.fill_array = record.fill_styles
@@ -138,6 +147,8 @@ class PathXml:
             fill = None
         if fill is not None:
             path_attr['fill'] = '#{0:02X}{1:02X}{2:02X}'.format(fill.color.red, fill.color.green, fill.color.blue)
+            if fill.color.alpha is not None:
+                path_attr['opacity'] = '{0:f}'.format(1 - fill.color.alpha / 255)
         return ET.Element('path', path_attr)
 
     @property
