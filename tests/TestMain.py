@@ -1,5 +1,6 @@
 import swf2svg
 import unittest
+import xml.dom.minidom
 import xml.etree.ElementTree
 
 
@@ -9,7 +10,12 @@ class TestMain(unittest.TestCase):
         self.output_file = None
 
     def tearDown(self):
-        xml.etree.ElementTree.ElementTree(self.svg_xml).write(self.output_file, encoding="UTF-8", xml_declaration=False, method="xml")
+        svg = xml.etree.ElementTree.tostring(self.svg_xml, encoding='utf8', method='xml')
+        xml_string = xml.dom.minidom.parseString(svg)
+        pretty_xml = xml_string.toprettyxml()
+        text_file = open(self.output_file, "w")
+        text_file.write(pretty_xml)
+        text_file.close()
 
     def test_candy(self):
         input_file = 'swf/candy.swf'

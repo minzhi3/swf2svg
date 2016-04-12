@@ -7,7 +7,7 @@ class DefineSprite(TagData):
     def __init__(self, content):
         super().__init__(content)
         (self.id, self.frame_count) = struct.unpack_from("HH", content)
-        self.control_tags = []
+        self.control_tags = list()
         self.read_data()
         self.tag_id = 39
 
@@ -29,7 +29,7 @@ class DefineSprite(TagData):
             if tag in [9, 69, 77]:
                 print(swf2svg.tag_name.get(tag))
             elif tag == 26:
-                place_object2 = PlaceObject.PlaceObject2(sub_content)
+                place_object2 = PlaceObject.PlaceObject2(sub_content, self.id)
                 self.control_tags.append(place_object2)
             elif tag == 1:
                 self.control_tags.append(ShowFrame())

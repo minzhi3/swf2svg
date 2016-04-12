@@ -47,19 +47,19 @@ class SwfToSvg:
             define_shape = DefineShape(content)
             define_shape.read_data()
             self.characters[define_shape.id] = define_shape
-            print(define_shape)
+            # print(define_shape)
         elif tag == 22:  # DefineShape2
             define_shape = DefineShape2(content)
             define_shape.read_data()
             self.characters[define_shape.id] = define_shape
-            print(define_shape)
+            # print(define_shape)
         elif tag == 32:  # DefineShape3
             define_shape = DefineShape3(content)
             define_shape.read_data()
             self.characters[define_shape.id] = define_shape
-            print(define_shape)
+            # print(define_shape)
         elif tag == 26:  # PlaceObject2
-            place_object2 = PlaceObject2(content)
+            place_object2 = PlaceObject2(content, parent_id=0)
             self.place_objects.append(place_object2)
             print(place_object2)
         elif tag == 39:  # DefineSprite
@@ -83,14 +83,11 @@ class SwfToSvg:
         else:
             return False
 
-    def _to_xml(self):
+    def _to_xml(self) -> ET.Element:
 
         root_attr = {'xmlns': 'http://www.w3.org/2000/svg',
                      'version': '1.1',
-                     'xmlns:xlink': 'http://www.w3.org/1999/xlink',
-                     'preserveAspectRatio': "none",
-                     'x': "0px",
-                     'y': "0px"
+                     'xmlns:xlink': 'http://www.w3.org/1999/xlink'
                      }
         svg_root = ET.Element('svg', root_attr)
         svg_node_defs = ET.Element('defs')
@@ -113,14 +110,14 @@ class SwfToSvg:
                 svg_root.append(use_xml_node)
         return svg_root
 
-    def to_svg(self):
+    def to_svg(self) -> ET.Element:
         self._read_head()
         while not self._is_end():
             self._read_tag()
         return self._to_xml()
 
 
-def to_svg(swf_file):
+def to_svg(swf_file) -> ET.Element:
     file = open(swf_file, "rb")
     swf = SwfToSvg(file)
     svg_xml = swf.to_svg()
