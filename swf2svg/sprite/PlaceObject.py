@@ -60,7 +60,7 @@ class PlaceObject2(TagData):
             group_attr = {'id': 'parent{0:>02}_depth{1:>02}'.format(self.parent_id, self.depth)}
             use_attr = {'xlink:href': '#symbol{:>02}'.format(self.character_id)}
             if self.flag_matrix:
-                use_attr['transform'] = 'matrix({0},{1},{2},{3},{4},{5})'.format(*(self.matrix.to_matrix_tuple(twink)))
+                group_attr['transform'] = 'matrix({0},{1},{2},{3},{4},{5})'.format(*(self.matrix.to_matrix_tuple(twink)))
             use_node = ET.Element('use', use_attr)
             group_node = ET.Element('g', group_attr)
             group_node.append(use_node)
