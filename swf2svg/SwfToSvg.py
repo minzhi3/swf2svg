@@ -3,6 +3,7 @@ import struct
 import xml.etree.ElementTree as ET
 import swf2svg.basic_data_type as basic_type
 import swf2svg.bit_reader as bit_reader
+from swf2svg.TagData import ShowFrame
 from swf2svg.shape.DefineShape import DefineShape, DefineShape2, DefineShape3
 from swf2svg.sprite.DefineSprite import DefineSprite
 from swf2svg.sprite.PlaceObject import PlaceObject2
@@ -20,7 +21,9 @@ class SwfToSvg:
         self.frame_count = 0
         self.twink = 20
         self.characters = dict()
-        self.place_objects = list()
+        self.control_tags = list()
+        self.root_animate_list = dict()
+        self.root_display_list = dict()
 
     def _read_head(self):
         head_str = self.file.read(3)
@@ -41,8 +44,12 @@ class SwfToSvg:
             length = struct.unpack('I', self.file.read(4))[0]
 
         content = self.file.read(length)
-        if tag in [0, 1, 9, 69, 77]:
+        if tag in [0, 9, 69, 77]:
             print(tag_name.get(tag))
+        elif tag == 1:  # ShowFrame
+            show_frame = ShowFrame()
+            self.control_tags.append(show_frame)
+            print(show_frame)
         elif tag == 2:  # DefineShape
             define_shape = DefineShape(content)
             define_shape.read_data()
@@ -59,8 +66,8 @@ class SwfToSvg:
             self.characters[define_shape.id] = define_shape
             # print(define_shape)
         elif tag == 26:  # PlaceObject2
-            place_object2 = PlaceObject2(content, parent_id=0)
-            self.place_objects.append(place_object2)
+            place_object2 = PlaceObject2(content)
+            self.control_tags.append(place_object2)
             print(place_object2)
         elif tag == 39:  # DefineSprite
             define_sprite = DefineSprite(content)
@@ -91,24 +98,72 @@ class SwfToSvg:
                      }
         svg_root = ET.Element('svg', root_attr)
         svg_node_defs = ET.Element('defs')
-        for (id, data) in self.characters.items():
+        for (symbol_id, data) in self.characters.items():
             svg_node_symbol = ET.Element('symbol', {'id': 'symbol{:>02}'.format(data.id), 'overflow': 'visible'})
             if data.tag_id in [2, 22, 32]:  # DefineShape <defs>
                 shape_xml_nodes = data.shape_with_style.to_xml(self.twink)
                 for shape_xml in shape_xml_nodes:
                     svg_node_symbol.append(shape_xml)
             elif data.tag_id == 39:  # DefineSprite <defs> <use>
-                sprite_xml_nodes = data.to_xml(self.twink)
+                sprite_xml_nodes = data.to_xml_list(self.twink)
                 for sprite_xml in sprite_xml_nodes:
                     svg_node_symbol.append(sprite_xml)
             svg_node_defs.append(svg_node_symbol)
-
         svg_root.append(svg_node_defs)
-        for place_object in self.place_objects:
-            use_xml_node = place_object.to_xml(self.twink)
-            if use_xml_node is not None:
-                svg_root.append(use_xml_node)
+
+        # Add element in root node
+        if len(self.root_display_list) == 0:
+            self._convert_control_tag()
+        for (depth, use_node_list) in self.root_display_list.items():
+            group_attr = {'id': 'sprite{0:>02}_depth{1:>02}'.format(0, depth)}
+            group_node = ET.Element('g', group_attr)
+            for use_node in use_node_list:
+                group_node.append(use_node)
+            svg_root.append(group_node)
+
         return svg_root
+
+    def _to_json_list(self):
+        json_list = list()
+        for (symbol_id, data) in self.characters.items():
+            if data.tag_id == 39:  # DefineSprite <defs> <use>
+                sprite_animations = data.to_json_list(self.twink)
+                json_list = json_list + sprite_animations
+
+        # Add element in root node
+        if len(self.root_animate_list) == 0:
+            self._convert_control_tag()
+        root_animation = list()
+        for (depth, animation_list) in self.root_animate_list.items():
+            animation = dict()
+            animation['elementID'] = 'sprite{0:>02}_depth{1:>02}'.format(0, depth)
+            animation['frameData'] = animation_list
+            root_animation.append(animation)
+        return json_list + root_animation
+
+    def _convert_control_tag(self):
+        display_list = dict()
+        animate_list = dict()
+        frame = 0
+        for data in self.control_tags:
+            if data.tag_id == 26:  # PlaceObject2
+                place_object = data  # type: PlaceObject2
+                if place_object.flag_character:
+                    if place_object.depth not in display_list.keys():
+                        display_list[place_object.depth] = list()
+                    use_node = place_object.to_xml(self.twink)
+                    display_list[place_object.depth].append(use_node)
+                if place_object.flag_matrix:
+                    if place_object.depth not in animate_list.keys():
+                        animate_list[place_object.depth] = list()
+                    animation = dict()
+                    animation['frame'] = frame
+                    animation['animation'] = place_object.to_dict(self.twink)
+                    animate_list[place_object.depth].append(animation)
+            if data.tag_id == 1:  # ShowFrame
+                frame += 1
+        self.root_display_list = display_list
+        self.root_animate_list = animate_list
 
     def to_svg(self) -> ET.Element:
         self._read_head()
@@ -116,12 +171,19 @@ class SwfToSvg:
             self._read_tag()
         return self._to_xml()
 
+    def get_animation(self, svg_path):
+        ret = dict()
+        ret['fileName'] = svg_path
+        ret['animations'] = self._to_json_list()
+        return ret
 
-def to_svg(swf_file) -> ET.Element:
-    file = open(swf_file, "rb")
+
+def to_svg(swf_path, svg_path) -> (ET.Element, object):
+    file = open(swf_path, "rb")
     swf = SwfToSvg(file)
     svg_xml = swf.to_svg()
-    return svg_xml
+    animation = swf.get_animation(svg_path)
+    return svg_xml, animation
 
 
 def main():

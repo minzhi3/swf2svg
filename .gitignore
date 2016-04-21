@@ -1,4 +1,5 @@
 /tests/swf
 /tests/svg
+/tests/js
 /.idea
 /__pycache__

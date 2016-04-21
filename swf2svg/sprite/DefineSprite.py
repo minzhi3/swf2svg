@@ -1,6 +1,7 @@
 import struct
 import swf2svg.sprite.PlaceObject as PlaceObject
 from swf2svg.TagData import TagData, ShowFrame
+import xml.etree.ElementTree as ET
 
 
 class DefineSprite(TagData):
@@ -8,8 +9,10 @@ class DefineSprite(TagData):
         super().__init__(content)
         (self.id, self.frame_count) = struct.unpack_from("HH", content)
         self.control_tags = list()
-        self.read_data()
         self.tag_id = 39
+        self.display_list = dict()
+        self.animate_list = dict()
+        self.read_data()
 
     def read_data(self):
         self.read_tag()
@@ -31,7 +34,7 @@ class DefineSprite(TagData):
             elif tag == 28:
                 print('RemoveObject2')
             elif tag == 26:
-                place_object2 = PlaceObject.PlaceObject2(sub_content, self.id)
+                place_object2 = PlaceObject.PlaceObject2(sub_content)
                 self.control_tags.append(place_object2)
             elif tag == 12:
                 print('DoAction')
@@ -43,15 +46,52 @@ class DefineSprite(TagData):
                 raise Exception('unknown tag {0:02X}'.format(tag))
             point += length
 
-    def to_xml(self, twink):
-        use_nodes = list()
+    def to_xml_list(self, twink):
+        if len(self.display_list) == 0:
+            self._convert(twink)
+        ret = list()
+        for (depth, use_node_list) in self.display_list.items():
+            group_attr = {'id': 'sprite{0:>02}_depth{1:>02}'.format(self.id, depth)}
+            group_node = ET.Element('g', group_attr)
+            for use_node in use_node_list:
+                group_node.append(use_node)
+            ret.append(group_node)
+        return ret
+
+    def to_json_list(self, twink):
+        if len(self.animate_list) == 0:
+            self._convert(twink)
+        ret = list()
+        for (depth, animation_list) in self.animate_list.items():
+            animation = dict()
+            animation['elementID'] = 'sprite{0:>02}_depth{1:>02}'.format(self.id, depth)
+            animation['frameData'] = animation_list
+            ret.append(animation)
+        return ret
+
+    def _convert(self, twink):
+        display_list = dict()
+        animate_list = dict()
+        frame = 0
         for data in self.control_tags:
-            if data.tag_id == 26:
+            if data.tag_id == 26:  # PlaceObject2
                 place_object = data  # type: PlaceObject.PlaceObject2
-                use_node = place_object.to_xml(twink)
-                if use_node is not None:
-                    use_nodes.append(use_node)
-        return use_nodes
+                if place_object.flag_character:
+                    if place_object.depth not in display_list.keys():
+                        display_list[place_object.depth] = list()
+                    use_node = place_object.to_xml(twink)
+                    display_list[place_object.depth].append(use_node)
+                if place_object.flag_matrix:
+                    if place_object.depth not in animate_list.keys():
+                        animate_list[place_object.depth] = list()
+                    animation = dict()
+                    animation['frame'] = frame
+                    animation['animation'] = place_object.to_dict(twink)
+                    animate_list[place_object.depth].append(animation)
+            if data.tag_id == 1:  # ShowFrame
+                frame += 1
+        self.display_list = display_list
+        self.animate_list = animate_list
 
     def __str__(self):
         ret = 'DefineSprite size:{0}, id:{1}, frame:{2}\n\t'.format(self.size, self.id, self.frame_count)

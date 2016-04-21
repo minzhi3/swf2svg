@@ -5,10 +5,9 @@ from swf2svg.TagData import TagData
 
 
 class PlaceObject2(TagData):
-    def __init__(self, content, parent_id):
+    def __init__(self, content):
         super().__init__(content)
         self.tag_id = 26
-        self.parent_id = parent_id
         flags = struct.unpack_from("B", content)[0]
         self.flag_clip_action = flags & 0x80 > 0
         self.flag_clip_depth = flags & 0x40 > 0
@@ -57,14 +56,22 @@ class PlaceObject2(TagData):
 
     def to_xml(self, twink):
         if self.flag_character:
-            group_attr = {'id': 'parent{0:>02}_depth{1:>02}'.format(self.parent_id, self.depth)}
+            # group_attr = {'id': 'parent{0:>02}_depth{1:>02}'.format(self.parent_id, self.depth)}
             use_attr = {'xlink:href': '#symbol{:>02}'.format(self.character_id)}
-            if self.flag_matrix:
-                group_attr['transform'] = 'matrix({0},{1},{2},{3},{4},{5})'.format(*(self.matrix.to_matrix_tuple(twink)))
+            # if self.flag_matrix:
+                # group_attr['transform'] = 'matrix({0},{1},{2},{3},{4},{5})'.format(*(self.matrix.to_matrix_tuple(twink)))
             use_node = ET.Element('use', use_attr)
-            group_node = ET.Element('g', group_attr)
-            group_node.append(use_node)
-            return group_node
+            # group_node = ET.Element('g', group_attr)
+            # group_node.append(use_node)
+            return use_node
+        else:
+            return None
+
+    def to_dict(self, twink):
+        if self.flag_matrix:
+            animation = dict()
+            animation['transform'] = 'matrix({0},{1},{2},{3},{4},{5})'.format(*(self.matrix.to_matrix_tuple(twink)))
+            return animation
         else:
             return None
 
