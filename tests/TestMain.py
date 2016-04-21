@@ -31,3 +31,8 @@ class TestMain(unittest.TestCase):
         input_file = 'swf/angelbody_petit_eto_0001.swf'
         self.output_file = 'svg/body2.svg'
         self.svg_xml = swf2svg.to_svg(input_file=input_file)
+
+    def test_sky(self):
+        input_file = 'swf/skyMc_0156.swf'
+        self.output_file = 'svg/skyMc_0156.svg'
+        self.svg_xml = swf2svg.to_svg(input_file=input_file)

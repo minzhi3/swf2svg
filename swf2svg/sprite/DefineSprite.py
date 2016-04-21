@@ -28,9 +28,13 @@ class DefineSprite(TagData):
             sub_content = self.content[point:point + length]
             if tag in [9, 69, 77]:
                 print(swf2svg.tag_name.get(tag))
+            elif tag == 28:
+                print('RemoveObject2')
             elif tag == 26:
                 place_object2 = PlaceObject.PlaceObject2(sub_content, self.id)
                 self.control_tags.append(place_object2)
+            elif tag == 12:
+                print('DoAction')
             elif tag == 1:
                 self.control_tags.append(ShowFrame())
             elif tag == 0:
