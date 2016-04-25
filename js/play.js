@@ -33,8 +33,13 @@ function playAll(svg, animations, frameLength){
 	var ground = Snap("#test");
 	var FPSSnapSVG = 12;
 	var frameLength = 1000.0/FPSSnapSVG;
-	Snap.load(svgInfo.fileName, function(svgElement){
-		playAll(svgElement, svgInfo.animations, frameLength);
-		ground.append(svgElement);
-	});
+	var json_url = $('#json_url').attr('href');
+	var svg_url = $('#svg_url').attr('href');
+    $.getJSON(json_url, function(svgInfo){
+    	Snap.load(svg_url, function(svgElement){
+		    playAll(svgElement, svgInfo.animations, frameLength);
+		    ground.append(svgElement);
+	    });
+    });
+
 })();

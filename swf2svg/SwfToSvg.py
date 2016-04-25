@@ -1,5 +1,7 @@
+import json
 import sys
 import struct
+import xml.dom.minidom
 import xml.etree.ElementTree as ET
 import swf2svg.basic_data_type as basic_type
 import swf2svg.bit_reader as bit_reader
@@ -191,14 +193,32 @@ def to_svg(swf_path, svg_path) -> (ET.Element, object):
     return svg_xml, animation
 
 
+def write_file(input_file_path, svg_file_path, json_file_path, petty_print=False):
+    svg_xml, animation_json = to_svg(input_file_path, svg_path=svg_file_path)
+    json_file = open(json_file_path, 'w')
+    if petty_print:
+        svg_string = ET.tostring(svg_xml, encoding='utf8', method='xml')
+        xml_string = xml.dom.minidom.parseString(svg_string)
+        pretty_xml = xml_string.toprettyxml()
+        text_file = open(svg_file_path, 'w')
+        text_file.write(pretty_xml)
+        text_file.close()
+        json.dump(animation_json, json_file, indent=4)
+    else:
+        ET.ElementTree(svg_xml).write(svg_file_path, encoding="UTF-8", xml_declaration=False, method="xml")
+        json.dump(animation_json, json_file)
+
+    json_file.close()
+
+
 def main():
-    if len(sys.argv) != 3:
-        print("Usage: python swf2svg.py <input file> <output file>")
+    if len(sys.argv) != 4:
+        print("Usage: python swf2svg.py <input file> <output svg> <output json>")
         exit(2)
-    input_file = sys.argv[1]
-    output_file = sys.argv[2]
-    svg_xml = to_svg(input_file)
-    ET.ElementTree(svg_xml).write(output_file, encoding="UTF-8", xml_declaration=False, method="xml")
+    input_file_path = sys.argv[1]
+    svg_file_path = sys.argv[2]
+    json_file_path = sys.argv[3]
+    write_file(input_file_path, svg_file_path, json_file_path)
 
 
 if __name__ == "__main__":
