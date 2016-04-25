@@ -22,7 +22,7 @@ class TestMain(unittest.TestCase):
 
         js_file = open(self.js_file, 'w')
         js_file.write('var svgInfo = ')
-        json.dump(self.json, js_file, indent=2)
+        json.dump(self.json, js_file)
         js_file.close()
 
     def test_candy(self):

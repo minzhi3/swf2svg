@@ -50,10 +50,14 @@ class DefineSprite(TagData):
         if len(self.display_list) == 0:
             self._convert(twink)
         ret = list()
-        for (depth, use_node_list) in self.display_list.items():
+        depth_keys = sorted(self.display_list.keys())
+        for depth in depth_keys:
             group_attr = {'id': 'sprite{0:>02}_depth{1:>02}'.format(self.id, depth)}
+            if len(self.animate_list.get(depth, list())) == 1:
+                animation = self.animate_list.get(depth)[0]
+                group_attr.update(animation['animation'])
             group_node = ET.Element('g', group_attr)
-            for use_node in use_node_list:
+            for use_node in self.display_list[depth]:
                 group_node.append(use_node)
             ret.append(group_node)
         return ret
@@ -66,7 +70,8 @@ class DefineSprite(TagData):
             animation = dict()
             animation['elementID'] = 'sprite{0:>02}_depth{1:>02}'.format(self.id, depth)
             animation['frameData'] = animation_list
-            ret.append(animation)
+            if len(animation_list) > 1:
+                ret.append(animation)
         return ret
 
     def _convert(self, twink):

@@ -114,10 +114,14 @@ class SwfToSvg:
         # Add element in root node
         if len(self.root_display_list) == 0:
             self._convert_control_tag()
-        for (depth, use_node_list) in self.root_display_list.items():
+        depth_keys = sorted(self.root_display_list.keys())
+        for depth in depth_keys:
             group_attr = {'id': 'sprite{0:>02}_depth{1:>02}'.format(0, depth)}
+            if len(self.root_animate_list.get(depth, list())) == 1:
+                animation = self.root_animate_list.get(depth)[0]
+                group_attr.update(animation['animation'])
             group_node = ET.Element('g', group_attr)
-            for use_node in use_node_list:
+            for use_node in self.root_display_list[depth]:
                 group_node.append(use_node)
             svg_root.append(group_node)
 
@@ -138,7 +142,8 @@ class SwfToSvg:
             animation = dict()
             animation['elementID'] = 'sprite{0:>02}_depth{1:>02}'.format(0, depth)
             animation['frameData'] = animation_list
-            root_animation.append(animation)
+            if len(animation_list) > 1:
+                root_animation.append(animation)
         return json_list + root_animation
 
     def _convert_control_tag(self):
