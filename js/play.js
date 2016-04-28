@@ -9,7 +9,7 @@ function playAll(svg, animations, frameLength){
                 var setInitial = function(){
                     element.attr(frameData[0].animation)
                     if (frameData.length > 1)
-                        playElement(element, frameData, 1);
+                        playElement(1);
                 }
                 setTimeout(setInitial, during)
             }else {

@@ -57,6 +57,8 @@ class SwfToSvg:
             define_shape.read_data()
             self.characters[define_shape.id] = define_shape
             # print(define_shape)
+        elif tag == 12:  # DoAction
+            print('DoAction')
         elif tag == 22:  # DefineShape2
             define_shape = DefineShape2(content)
             define_shape.read_data()
@@ -71,6 +73,8 @@ class SwfToSvg:
             place_object2 = PlaceObject2(content)
             self.control_tags.append(place_object2)
             print(place_object2)
+        elif tag == 34:  # DefineButton2
+            print('DefineButton2')
         elif tag == 39:  # DefineSprite
             define_sprite = DefineSprite(content)
             self.characters[define_sprite.id] = define_sprite

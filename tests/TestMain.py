@@ -15,10 +15,10 @@ class TestMain(unittest.TestCase):
         output_json = 'json/body.json'
         swf2svg.write_file(input_file, output_svg, output_json, True)
 
-    def test_body2(self):
-        input_file = 'swf/angelbody_petit_eto_0001.swf'
-        output_svg = 'svg/body2.svg'
-        output_json = 'json/body2.json'
+    def test_angel_failure(self):
+        input_file = 'swf/angel_failure_android.swf'
+        output_svg = 'svg/angel_failure_android.svg'
+        output_json = 'json/angel_failure_android.json'
         swf2svg.write_file(input_file, output_svg, output_json, True)
 
     def test_sky(self):
@@ -26,3 +26,4 @@ class TestMain(unittest.TestCase):
         output_svg = 'svg/skyMc_0156.svg'
         output_json = 'json/skyMc_0156.json'
         swf2svg.write_file(input_file, output_svg, output_json, True)
+

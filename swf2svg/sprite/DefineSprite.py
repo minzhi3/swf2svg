@@ -1,6 +1,6 @@
 import struct
 import swf2svg.sprite.PlaceObject as PlaceObject
-from swf2svg.TagData import TagData, ShowFrame
+from swf2svg.TagData import TagData, ShowFrame, DoAction
 import xml.etree.ElementTree as ET
 
 
@@ -29,15 +29,14 @@ class DefineSprite(TagData):
                 point += 4
 
             sub_content = self.content[point:point + length]
-            if tag in [9, 69, 77]:
-                print(swf2svg.tag_name.get(tag))
-            elif tag == 28:
-                print('RemoveObject2')
+            if tag == 28:
+                remove_object2 = PlaceObject.RemoveObject2(sub_content)
+                self.control_tags.append(remove_object2)
             elif tag == 26:
                 place_object2 = PlaceObject.PlaceObject2(sub_content)
                 self.control_tags.append(place_object2)
             elif tag == 12:
-                print('DoAction')
+                self.control_tags.append(DoAction())
             elif tag == 1:
                 self.control_tags.append(ShowFrame())
             elif tag == 0:

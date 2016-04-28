@@ -12,4 +12,23 @@ class ShowFrame(TagData):
         self.tag_id = 1
 
     def __str__(self):
-        return "Show Frame"
+        return "ShowFrame"
+
+
+class DoAction(TagData):
+    def __init__(self):
+        super().__init__(b'')
+        self.tag_id = 12
+
+    def __str__(self):
+        return "DoAction"
+
+
+class End(TagData):
+    def __init__(self):
+        super().__init__(b'')
+        self.tag_id = 0
+
+    def __str__(self):
+        return "End"
+
